@@ -1,0 +1,4 @@
+firebase-credentials.json
+node_modules/
+*.log
+.env
