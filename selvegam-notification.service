@@ -1,0 +1,27 @@
+[Unit]
+Description=Selvagam School Notification API - FastAPI Application
+After=network.target
+
+[Service]
+Type=simple
+User=sanjeevan
+Group=www-data
+WorkingDirectory=/var/www/projects/client_side/selvegam_school/selvegam_school_notification
+Environment="PATH=/var/www/projects/client_side/selvegam_school/selvegam_school_notification/venv/bin"
+ExecStart=/var/www/projects/client_side/selvegam_school/selvegam_school_notification/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8081 --workers 2
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=selvegam-notification
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
