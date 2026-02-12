@@ -2,7 +2,7 @@
 # Run this from Windows PowerShell
 
 # CONFIGURATION - UPDATE THESE VALUES
-$SERVER_IP = "72.61.250.191"  # Replace with your server IP or hostname
+$SERVER_IP = "72.61.250.191"
 $SERVER_USER = "sanjeevan"
 $SERVER_PATH = "/var/www/projects/client_side/selvegam_school/selvegam_school_notification/"
 
@@ -12,7 +12,6 @@ $FILES = @(
     "requirements.txt",
     "firebase-credentials.json",
     "selvegam-notification.service",
-    "deploy.sh",
     "deploy.sh",
     "README_PYTHON.md",
     ".env"
