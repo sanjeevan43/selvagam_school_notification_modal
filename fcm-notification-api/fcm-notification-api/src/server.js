@@ -4,6 +4,12 @@ import bodyParser from 'body-parser'
 import admin from 'firebase-admin'
 import { readFileSync } from 'fs'
 
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express()
 const PORT = 8082
 const ADMIN_KEY = 'selvagam-admin-key-2024'
@@ -11,25 +17,50 @@ const ADMIN_KEY = 'selvagam-admin-key-2024'
 // Load Firebase credentials
 let serviceAccount;
 try {
-    const credsPath = './firebase-credentials.json';
+    // Try multiple possible paths for the credentials file
+    const possiblePaths = [
+        join(__dirname, '..', 'firebase-credentials.json'),
+        join(__dirname, 'firebase-credentials.json'),
+        './firebase-credentials.json'
+    ];
+
+    let credsPath = null;
+    for (const p of possiblePaths) {
+        try {
+            if (readFileSync(p, 'utf8')) {
+                credsPath = p;
+                break;
+            }
+        } catch (e) { }
+    }
+
+    if (!credsPath) {
+        throw new Error('firebase-credentials.json not found in any expected location');
+    }
+
     serviceAccount = JSON.parse(readFileSync(credsPath, 'utf8'));
+    console.log('📁 Using credentials from:', credsPath);
+
+    // Explicitly set Project ID for underlying Google Cloud libraries
+    if (serviceAccount.project_id) {
+        process.env.GOOGLE_CLOUD_PROJECT = serviceAccount.project_id;
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = credsPath;
+    }
 
     if (!admin.apps.length) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             projectId: serviceAccount.project_id
         });
+        console.log('✅ Firebase Admin initialized for project:', serviceAccount.project_id);
     }
-    console.log('✅ Loaded credentials from firebase-credentials.json for project:', serviceAccount.project_id);
 } catch (error) {
-    console.warn('⚠️ firebase-credentials.json not found, trying Application Default Credentials...');
+    console.warn('⚠️ Firebase initialization warning:', error.message);
     try {
         if (!admin.apps.length) {
-            admin.initializeApp({
-                credential: admin.credential.applicationDefault()
-            });
+            admin.initializeApp();
+            console.log('✅ Initialized with Application Default Credentials');
         }
-        console.log('✅ Initialized with Application Default Credentials');
     } catch (err) {
         console.error('❌ Failed to initialize Firebase:', err.message);
     }
@@ -51,7 +82,11 @@ app.post('/api/send-notification', authenticateApiKey, async (req, res) => {
     try {
         const { title, body, topic = 'all_users', messageType = 'text' } = req.body
 
-        console.log('📨 Received:', { title, body, topic, messageType })
+        console.log('📨 Sending Broadcast Notification:', { title, body, topic, messageType })
+
+        // Debug check for project ID
+        const currentApp = admin.app();
+        console.log('🔍 Using Firebase Project:', currentApp.options.projectId || 'MISSING!');
 
         if (!title || !body) {
             return res.status(400).json({ error: 'Title and body required' })
@@ -67,14 +102,18 @@ app.post('/api/send-notification', authenticateApiKey, async (req, res) => {
             topic: topic
         }
 
-        console.log('🚀 Sending message:', message)
+        console.log('🚀 FCM Payload:', JSON.stringify(message, null, 2))
         const response = await admin.messaging().send(message)
-        console.log('✅ Sent successfully:', response)
+        console.log('✅ Send Success:', response)
         res.json({ success: true, messageId: response, messageType: messageType })
 
     } catch (error) {
-        console.error('FCM Error:', error)
-        res.status(500).json({ detail: `Failed to send notification: ${error.message}` })
+        console.error('❌ FCM Send Error:', error)
+        res.status(500).json({
+            error: 'FCM Send Failed',
+            detail: error.message,
+            projectId: admin.app().options.projectId
+        })
     }
 })
 
@@ -96,8 +135,12 @@ app.post('/api/send-notification-device', authenticateApiKey, async (req, res) =
         res.json({ success: true, messageId: response })
 
     } catch (error) {
-        console.error('FCM Error:', error)
-        res.status(500).json({ detail: `Failed to send notification: ${error.message}` })
+        console.error('❌ FCM Device Send Error:', error)
+        res.status(500).json({
+            error: 'FCM Send Failed',
+            detail: error.message,
+            projectId: admin.app()?.options?.projectId
+        })
     }
 })
 
