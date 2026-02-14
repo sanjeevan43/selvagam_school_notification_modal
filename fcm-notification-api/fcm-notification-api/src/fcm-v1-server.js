@@ -15,16 +15,25 @@ console.log('🔧 Server starting...');
 console.log('🌐 CORS enabled for all origins');
 
 // Initialize Google Auth
-if (!fs.existsSync('./firebase-credentials.json')) {
+const possiblePaths = ['./firebase-credentials.json', '../firebase-credentials.json'];
+let credentialsPath = null;
+
+for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+        credentialsPath = p;
+        break;
+    }
+}
+
+if (!credentialsPath) {
     console.error('❌ CRITICAL ERROR: firebase-credentials.json not found!');
-    console.error('👉 Please download your service account key from Firebase Console');
-    console.error('   and save it as "firebase-credentials.json" in this directory.');
-    console.error('   Path: ' + process.cwd() + '/firebase-credentials.json');
-    // Don't exit process, but requests will fail
+    console.error('👉 Please ensure your service account key is in the project root or src directory.');
+    console.error('   Current Working Directory: ' + process.cwd());
 }
 
 const auth = new GoogleAuth({
-    keyFile: './firebase-credentials.json',
+    projectId: PROJECT_ID,
+    keyFile: credentialsPath || undefined,
     scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
 });
 
@@ -103,8 +112,7 @@ app.post('/api/send-notification-device', async (req, res) => {
     } catch (error) {
         console.error('❌ Error sending notification:', error.message);
         res.status(500).json({
-            error: 'Failed to send notification',
-            details: error.message
+            detail: `Failed to send notification: ${error.message}`
         });
     }
 });

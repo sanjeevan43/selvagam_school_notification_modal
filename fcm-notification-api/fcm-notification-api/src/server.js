@@ -11,17 +11,24 @@ const ADMIN_KEY = 'selvagam-admin-key-2024'
 // Load Firebase credentials
 let serviceAccount;
 try {
-    serviceAccount = JSON.parse(readFileSync('./firebase-credentials.json', 'utf8'));
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
-    });
-    console.log('✅ Loaded credentials from firebase-credentials.json');
+    const credsPath = './firebase-credentials.json';
+    serviceAccount = JSON.parse(readFileSync(credsPath, 'utf8'));
+
+    if (!admin.apps.length) {
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id
+        });
+    }
+    console.log('✅ Loaded credentials from firebase-credentials.json for project:', serviceAccount.project_id);
 } catch (error) {
     console.warn('⚠️ firebase-credentials.json not found, trying Application Default Credentials...');
     try {
-        admin.initializeApp({
-            credential: admin.credential.applicationDefault()
-        });
+        if (!admin.apps.length) {
+            admin.initializeApp({
+                credential: admin.credential.applicationDefault()
+            });
+        }
         console.log('✅ Initialized with Application Default Credentials');
     } catch (err) {
         console.error('❌ Failed to initialize Firebase:', err.message);
@@ -67,7 +74,7 @@ app.post('/api/send-notification', authenticateApiKey, async (req, res) => {
 
     } catch (error) {
         console.error('FCM Error:', error)
-        res.status(500).json({ error: 'Failed to send notification', details: error.message })
+        res.status(500).json({ detail: `Failed to send notification: ${error.message}` })
     }
 })
 
@@ -90,7 +97,7 @@ app.post('/api/send-notification-device', authenticateApiKey, async (req, res) =
 
     } catch (error) {
         console.error('FCM Error:', error)
-        res.status(500).json({ error: 'Failed to send notification', details: error.message })
+        res.status(500).json({ detail: `Failed to send notification: ${error.message}` })
     }
 })
 
