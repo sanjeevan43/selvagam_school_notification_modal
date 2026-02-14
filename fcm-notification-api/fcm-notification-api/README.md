@@ -1,35 +1,34 @@
-# 🔥 FCM Notification API Setup
+# 🔥 FCM Notification API Setup (Python Version)
 
 ## ⚠️ CRITICAL: Firebase Credentials Required
 
 **BEFORE STARTING:** You need Firebase service account credentials.
 
-### Get Firebase Credentials:
+### Setup Instructions:
 1. Go to Firebase Console → Project Settings → Service Accounts
 2. Click "Generate new private key"
-3. Download the JSON file
-4. Copy these values to `src/server.js`:
-   - `private_key_id`
-   - `private_key` (keep the quotes and \n characters)
-   - `client_email`
-   - `client_id`
+3. Download the JSON file and rename it to `firebase-credentials.json`
+4. Place it in the project root or `src/` directory.
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Python)
 
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
 # Start the server
-npm start
+python src/server.py
 
 # Expected output:
-# FCM API running on http://localhost:3001
+# 🚀 FCM API running on http://0.0.0.0:8082
 ```
 
 ## 🧪 Test API
 
 ```bash
-curl -X POST http://localhost:3001/api/send-notification \
+curl -X POST http://localhost:8082/api/send-notification \
   -H "Content-Type: application/json" \
-  -H "X-ADMIN-KEY: selvagam-admin-key-2024" \
+  -H "x-admin-key: selvagam-admin-key-2024" \
   -d '{"title": "Test", "body": "API Working", "topic": "drivers"}'
 ```
 
@@ -39,6 +38,7 @@ curl -X POST http://localhost:3001/api/send-notification \
 // Subscribe to topics
 FirebaseMessaging.instance.subscribeToTopic("drivers");
 FirebaseMessaging.instance.subscribeToTopic("parents");
+FirebaseMessaging.instance.subscribeToTopic("all_users");
 
 // Handle notifications
 FirebaseMessaging.onMessage.listen((message) {
@@ -49,7 +49,7 @@ FirebaseMessaging.onMessage.listen((message) {
 
 ## ✅ Deployment Checklist
 
-- [ ] Replace Firebase credentials in `src/server.js`
-- [ ] Test both API endpoints
-- [ ] Mobile app subscribed to topics
-- [ ] Admin portal connected to API
+- [ ] Place `firebase-credentials.json` in the root or `src/` directory
+- [ ] Run `pip install -r requirements.txt`
+- [ ] Ensure port `8082` is open
+- [ ] Test API endpoint with `x-admin-key` header
