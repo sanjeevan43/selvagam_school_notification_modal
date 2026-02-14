@@ -5,7 +5,7 @@ import admin from 'firebase-admin'
 import { readFileSync } from 'fs'
 
 const app = express()
-const PORT = 3001
+const PORT = 8082
 const ADMIN_KEY = 'selvagam-admin-key-2024'
 
 // Load Firebase credentials

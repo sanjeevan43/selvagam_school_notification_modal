@@ -4,7 +4,7 @@ import { GoogleAuth } from 'google-auth-library';
 import fs from 'fs';
 
 const app = express();
-const PORT = 3001;
+const PORT = 8082;
 const PROJECT_ID = 'school-bus-tracking-fbf78';
 
 // Enable CORS for all origins (development only)
